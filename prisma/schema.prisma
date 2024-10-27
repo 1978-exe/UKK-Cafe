@@ -1,0 +1,76 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// schema.prisma
+
+model User {
+  id           Int           @id @default(autoincrement())
+  name         String        @default("")
+  email        String        @unique
+  password     String        @default("")
+  role         Role
+  transactions Transaction[] // Relasi ke Transaction
+}
+
+model Transaction {
+  id           Int               @id @default(autoincrement())
+  customerName String            // Menyimpan nama pelanggan
+  tableNumber  Int               // Menyimpan nomor meja
+  table        Table             @relation(fields: [tableNumber], references: [number]) // Relasi ke Table
+  orderItems   OrderItem[]       // Termasuk item pesanan
+  totalAmount  Float
+  createdAt    DateTime          @default(now())
+  cashierId    Int
+  cashier      User              @relation(fields: [cashierId], references: [id])
+  status       TransactionStatus
+}
+
+
+model OrderItem {
+  id            Int         @id @default(autoincrement())
+  menuItemId    Int
+  menuItem      MenuItem    @relation(fields: [menuItemId], references: [id])
+  transactionId Int
+  transaction   Transaction @relation(fields: [transactionId], references: [id])
+  quantity      Int
+}
+
+model MenuItem {
+  id         Int         @id @default(autoincrement())
+  name       String
+  price      Float
+  category   Category // Gunakan enum Category untuk tipe makanan/minuman
+  available  Boolean     @default(true)
+  orderItems OrderItem[] // Relasi ke OrderItem
+  image      String      @default("")
+}
+
+model Table {
+  id          Int          @id @default(autoincrement())
+  number      Int          @unique
+  isAvailable Boolean      @default(true) // Menyimpan status ketersediaan meja
+  transactions Transaction[] // Tambahkan relasi ke Transaction
+}
+
+
+enum Role {
+  ADMIN
+  KASIR
+  MANAJER
+}
+
+enum Category {
+  MAKANAN
+  MINUMAN
+}
+
+enum TransactionStatus {
+  PAID
+  UNPAID
+}
